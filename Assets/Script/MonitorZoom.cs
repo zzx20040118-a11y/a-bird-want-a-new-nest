@@ -14,10 +14,19 @@ public class MonitorZoom : MonoBehaviour
 
     private bool isZooming = false;
 
+    private Vector3 originalCameraPosition;
+    private Quaternion originalCameraRotation;
+    private bool hasOriginalCameraTransform = false;
+
+    
     public void StartZoom()
     {
         if (!isZooming)
         {
+            originalCameraPosition = playerCamera.position;
+            originalCameraRotation = playerCamera.rotation;
+            hasOriginalCameraTransform = true;
+
             if (firstPersonController != null)
             {
                 firstPersonController.enabled = false;
@@ -26,6 +35,7 @@ public class MonitorZoom : MonoBehaviour
             StartCoroutine(ZoomRoutine());
         }
     }
+
 
     private IEnumerator ZoomRoutine()
     {
@@ -75,4 +85,35 @@ public class MonitorZoom : MonoBehaviour
             Debug.LogError("请在 MonitorZoom 中指定 Story UI Controller！");
         }
     }
+
+    
+
+    
+    
+    public void ReturnToRoom()
+    {
+        if (storyUIController != null && storyUIController.storyUI != null)
+        {
+            storyUIController.storyUI.SetActive(false);
+        }
+
+        if (hasOriginalCameraTransform && playerCamera != null)
+        {
+            playerCamera.position = originalCameraPosition;
+            playerCamera.rotation = originalCameraRotation;
+        }
+
+        if (firstPersonController != null)
+        {
+            firstPersonController.enabled = true;
+        }
+
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+
+        isZooming = false;
+
+        Debug.Log("已返回监控室");
+    }
+
 }
