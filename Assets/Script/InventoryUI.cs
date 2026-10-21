@@ -1,4 +1,3 @@
-
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,6 +9,12 @@ public class InventoryUI : MonoBehaviour
 
     [Header("吹风机动画控制器")]
     public HairDryerAnimationController hairDryerController;
+
+    [Header("Panel_05 投放设置")]
+    public Panel05ItemController panel05ItemController;
+
+    [Header("允许投放到 Panel_05 的物品 ID")]
+    public string panel05ItemID = "ClockHourHand";
 
     private void Start()
     {
@@ -26,6 +31,7 @@ public class InventoryUI : MonoBehaviour
             return;
         }
 
+        // 清理旧的背包图标
         foreach (Transform child in itemList)
         {
             Destroy(child.gameObject);
@@ -35,6 +41,9 @@ public class InventoryUI : MonoBehaviour
 
         foreach (CollectibleItem item in items)
         {
+            if (item == null)
+                continue;
+
             GameObject card = Instantiate(itemCardPrefab, itemList);
 
             InventoryItemDrag drag =
@@ -44,14 +53,26 @@ public class InventoryUI : MonoBehaviour
             {
                 drag.itemID = item.itemID;
 
-                // 自动设置运行时生成的 ItemCard 的动画控制器
+                // 保留原有吹风机功能
                 if (item.itemID == "HairDryer")
                 {
-                    drag.hairDryerController = hairDryerController;
+                    drag.hairDryerController =
+                        hairDryerController;
+                }
+
+                // 设置 Panel_05 投放功能
+                if (item.itemID == panel05ItemID)
+                {
+                    drag.canDropOnPanel05 = true;
+                    drag.panel05ItemController =
+                        panel05ItemController;
                 }
             }
 
-            Transform iconTransform = card.transform.Find("ItemIcon");
+            // 设置背包图标图片
+            Transform iconTransform =
+                card.transform.Find("ItemIcon");
+
             Image icon = iconTransform != null
                 ? iconTransform.GetComponent<Image>()
                 : null;

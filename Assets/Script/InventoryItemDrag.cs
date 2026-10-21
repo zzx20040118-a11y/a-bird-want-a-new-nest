@@ -1,4 +1,3 @@
-
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -12,9 +11,13 @@ public class InventoryItemDrag : MonoBehaviour,
 
     public string itemID;
 
-    [Header("吹风机投放设置")]
+    [Header("原有吹风机投放设置")]
     public string targetPanelName = "Panel_03";
     public HairDryerAnimationController hairDryerController;
+
+    [Header("Panel_05 收集物投放设置")]
+    public bool canDropOnPanel05 = false;
+    public Panel05ItemController panel05ItemController;
 
     private Transform originalParent;
     private Vector2 originalPosition;
@@ -25,6 +28,7 @@ public class InventoryItemDrag : MonoBehaviour,
         canvas = GetComponentInParent<Canvas>();
 
         canvasGroup = GetComponent<CanvasGroup>();
+
         if (canvasGroup == null)
         {
             canvasGroup = gameObject.AddComponent<CanvasGroup>();
@@ -38,13 +42,17 @@ public class InventoryItemDrag : MonoBehaviour,
 
         canvasGroup.blocksRaycasts = false;
 
-        transform.SetParent(canvas.transform, true);
-        transform.SetAsLastSibling();
+        if (canvas != null)
+        {
+            transform.SetParent(canvas.transform, true);
+            transform.SetAsLastSibling();
+        }
     }
 
     public void OnDrag(PointerEventData eventData)
     {
-        if (canvas == null) return;
+        if (canvas == null)
+            return;
 
         rectTransform.anchoredPosition +=
             eventData.delta / canvas.scaleFactor;
@@ -52,7 +60,8 @@ public class InventoryItemDrag : MonoBehaviour,
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        bool droppedOnTarget = false;
+        bool droppedOnPanel03 = false;
+        bool droppedOnPanel05Zone = false;
 
         if (EventSystem.current != null)
         {
@@ -64,55 +73,89 @@ public class InventoryItemDrag : MonoBehaviour,
 
             pointerData.position = eventData.position;
 
-            EventSystem.current.RaycastAll(
-                pointerData, results);
+            EventSystem.current.RaycastAll(pointerData, results);
 
-            GameObject target = GameObject.Find(targetPanelName);
+            GameObject panel03 = GameObject.Find(targetPanelName);
+            GameObject dropZone05 =
+                GameObject.Find("Panel05DropZone");
 
             foreach (RaycastResult result in results)
             {
                 Transform hit = result.gameObject.transform;
 
+                // 原有 Panel_03 吹风机投放检测
                 if (hit.name == targetPanelName ||
-                    (target != null &&
-                     hit.IsChildOf(target.transform)))
+                    (panel03 != null &&
+                     hit.IsChildOf(panel03.transform)))
                 {
-                    droppedOnTarget = true;
-                    break;
+                    droppedOnPanel03 = true;
+                }
+
+                // Panel_05：检测是否投放到指定区域
+                if (dropZone05 != null &&
+                    (hit == dropZone05.transform ||
+                     hit.IsChildOf(dropZone05.transform)))
+                {
+                    droppedOnPanel05Zone = true;
                 }
             }
         }
 
+        // 恢复射线检测
         canvasGroup.blocksRaycasts = true;
 
-        // 吹风机成功投放
-        if (droppedOnTarget && itemID == "HairDryer")
+        // 原有吹风机投放逻辑
+        if (droppedOnPanel03 && itemID == "HairDryer")
         {
             if (hairDryerController != null)
             {
                 Debug.Log("吹风机投放成功，开始播放动画！");
 
-                // 启动动画，并隐藏 Panel_03
                 hairDryerController.PlayHairDryerAnimation();
-
-                // 隐藏背包中的吹风机
                 gameObject.SetActive(false);
             }
             else
             {
-                Debug.LogError(
-                    "吹风机动画控制器未指定，请检查 Inspector！");
-
-                // 未指定控制器时，让道具返回原位
-                transform.SetParent(originalParent, false);
-                rectTransform.anchoredPosition = originalPosition;
+                Debug.LogError("吹风机动画控制器未指定！");
+                ReturnToOriginalPosition();
             }
 
             return;
         }
 
-        // 其他道具以及投放失败：返回原位
-        transform.SetParent(originalParent, false);
-        rectTransform.anchoredPosition = originalPosition;
+        // Panel_05 指定区域投放逻辑
+        if (canDropOnPanel05 && droppedOnPanel05Zone)
+        {
+            if (panel05ItemController != null)
+            {
+                panel05ItemController.PlaceItem(gameObject);
+
+                // 如果投放成功，控制器会移除背包物品并显示场景物体
+                if (InventoryManager.Instance != null &&
+                    !InventoryManager.Instance.HasItem(itemID))
+                {
+                    gameObject.SetActive(false);
+                    return;
+                }
+            }
+            else
+            {
+                Debug.LogError(
+                    "Panel05ItemController 未指定！"
+                );
+            }
+        }
+
+        // 投放失败，返回原位
+        ReturnToOriginalPosition();
+    }
+
+    private void ReturnToOriginalPosition()
+    {
+        if (originalParent != null)
+        {
+            transform.SetParent(originalParent, false);
+            rectTransform.anchoredPosition = originalPosition;
+        }
     }
 }
