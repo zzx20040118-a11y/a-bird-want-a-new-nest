@@ -1,4 +1,3 @@
-
 using UnityEngine;
 
 public class ClockPuzzleChecker : MonoBehaviour
@@ -7,10 +6,14 @@ public class ClockPuzzleChecker : MonoBehaviour
     public RectTransform hourHand;
     public RectTransform minuteHand;
 
-    [Header("Target Time")]
-    public float targetHourAngle = 82.5f;
-    public float targetMinuteAngle = 0f;
+    [Header("Target Rotation Z")]
+    public float targetHourRotationZ = 7.5f;
+    public float targetMinuteRotationZ = 90f;
     public float angleTolerance = 5f;
+
+    [Header("背包物品 ID")]
+    public string hourHandItemID = "ClockHourHand";
+    public string minuteHandItemID = "ClockMinuteHand";
 
     private bool puzzleSolved = false;
 
@@ -22,28 +25,50 @@ public class ClockPuzzleChecker : MonoBehaviour
         if (hourHand == null || minuteHand == null)
             return;
 
-        float hourAngle = GetClockAngle(hourHand);
-        float minuteAngle = GetClockAngle(minuteHand);
+        float hourZ = hourHand.localEulerAngles.z;
+        float minuteZ = minuteHand.localEulerAngles.z;
+
+        bool hourCorrect =
+            Mathf.Abs(Mathf.DeltaAngle(
+                hourZ, targetHourRotationZ)) <= angleTolerance;
+
+        bool minuteCorrect =
+            Mathf.Abs(Mathf.DeltaAngle(
+                minuteZ, targetMinuteRotationZ)) <= angleTolerance;
 
         if (Input.GetKeyDown(KeyCode.P))
         {
-            Debug.Log("时针实际角度：" + hourAngle);
-            Debug.Log("分针实际角度：" + minuteAngle);
+            Debug.Log(
+                $"时针 Z={hourZ:F1}，目标={targetHourRotationZ:F1}，正确={hourCorrect}"
+            );
+
+            Debug.Log(
+                $"分针 Z={minuteZ:F1}，目标={targetMinuteRotationZ:F1}，正确={minuteCorrect}"
+            );
         }
-
-        bool hourCorrect =
-            Mathf.Abs(Mathf.DeltaAngle(hourAngle, targetHourAngle))
-            <= angleTolerance;
-
-        bool minuteCorrect =
-            Mathf.Abs(Mathf.DeltaAngle(minuteAngle, targetMinuteAngle))
-            <= angleTolerance;
 
         if (hourCorrect && minuteCorrect)
         {
             puzzleSolved = true;
-            Debug.Log("钟表谜题解开！目标时间：11:45");
 
+            Debug.Log("钟表谜题解开！");
+
+            // 谜题成功后，从背包数据中移除时针和分针
+            if (InventoryManager.Instance != null)
+            {
+                InventoryManager.Instance.RemoveItem(hourHandItemID);
+                InventoryManager.Instance.RemoveItem(minuteHandItemID);
+
+                Debug.Log("已移除背包中的时针和分针。");
+            }
+            else
+            {
+                Debug.LogWarning(
+                    "没有找到 InventoryManager，无法移除时针和分针。"
+                );
+            }
+
+            // 保留原有动画逻辑
             Transform panel = transform.parent;
 
             if (panel == null)
@@ -58,12 +83,11 @@ public class ClockPuzzleChecker : MonoBehaviour
             if (animationRoot == null)
             {
                 Debug.LogWarning(
-                    "没有找到 ClockAnimationRoot，请检查物体层级！"
+                    "没有找到 ClockAnimationRoot，请检查层级！"
                 );
                 return;
             }
 
-            // 先激活动画物体
             animationRoot.gameObject.SetActive(true);
 
             Animator animator =
@@ -72,7 +96,7 @@ public class ClockPuzzleChecker : MonoBehaviour
             if (animator != null)
             {
                 animator.SetTrigger("ClockSolved");
-                Debug.Log("已激活并触发 ClockAnimationRoot 动画！");
+                Debug.Log("已触发 ClockSolved！");
             }
             else
             {
@@ -81,20 +105,5 @@ public class ClockPuzzleChecker : MonoBehaviour
                 );
             }
         }
-        else if (Input.GetKeyDown(KeyCode.P))
-        {
-            Debug.Log(
-                "时针是否正确：" + hourCorrect +
-                "，分针是否正确：" + minuteCorrect
-            );
-        }
-    }
-
-    private float GetClockAngle(RectTransform hand)
-    {
-        return Mathf.Repeat(
-            90f - hand.localEulerAngles.z,
-            360f
-        );
     }
 }

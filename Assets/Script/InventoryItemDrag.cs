@@ -1,3 +1,4 @@
+
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -83,7 +84,7 @@ public class InventoryItemDrag : MonoBehaviour,
             {
                 Transform hit = result.gameObject.transform;
 
-                // 原有 Panel_03 吹风机投放检测
+                // Panel_03 吹风机投放检测
                 if (hit.name == targetPanelName ||
                     (panel03 != null &&
                      hit.IsChildOf(panel03.transform)))
@@ -91,7 +92,7 @@ public class InventoryItemDrag : MonoBehaviour,
                     droppedOnPanel03 = true;
                 }
 
-                // Panel_05：检测是否投放到指定区域
+                // Panel_05 指定区域投放检测
                 if (dropZone05 != null &&
                     (hit == dropZone05.transform ||
                      hit.IsChildOf(dropZone05.transform)))
@@ -104,14 +105,23 @@ public class InventoryItemDrag : MonoBehaviour,
         // 恢复射线检测
         canvasGroup.blocksRaycasts = true;
 
-        // 原有吹风机投放逻辑
+        // 吹风机投放逻辑
         if (droppedOnPanel03 && itemID == "HairDryer")
         {
             if (hairDryerController != null)
             {
                 Debug.Log("吹风机投放成功，开始播放动画！");
 
+                // 从背包数据中移除吹风机
+                if (InventoryManager.Instance != null)
+                {
+                    InventoryManager.Instance.RemoveItem(itemID);
+                }
+
+                // 播放原有动画
                 hairDryerController.PlayHairDryerAnimation();
+
+                // 隐藏当前背包图标
                 gameObject.SetActive(false);
             }
             else
@@ -130,7 +140,7 @@ public class InventoryItemDrag : MonoBehaviour,
             {
                 panel05ItemController.PlaceItem(gameObject);
 
-                // 如果投放成功，控制器会移除背包物品并显示场景物体
+                // 控制器成功移除物品后，隐藏背包图标
                 if (InventoryManager.Instance != null &&
                     !InventoryManager.Instance.HasItem(itemID))
                 {
@@ -146,7 +156,7 @@ public class InventoryItemDrag : MonoBehaviour,
             }
         }
 
-        // 投放失败，返回原位
+        // 投放失败，返回原来的位置
         ReturnToOriginalPosition();
     }
 

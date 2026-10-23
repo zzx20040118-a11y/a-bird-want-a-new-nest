@@ -3,12 +3,14 @@ using UnityEngine;
 
 public class MonitorZoom : MonoBehaviour
 {
+    [Header("镜头推进设置")]
     public Transform playerCamera;
     public Transform monitor;
 
     public float zoomDuration = 1.2f;
     public float stopDistance = 0.8f;
 
+    [Header("故事界面")]
     public StoryUIController storyUIController;
     public FirstPersonController firstPersonController;
 
@@ -18,24 +20,30 @@ public class MonitorZoom : MonoBehaviour
     private Quaternion originalCameraRotation;
     private bool hasOriginalCameraTransform = false;
 
-    
     public void StartZoom()
     {
-        if (!isZooming)
+        if (isZooming)
+            return;
+
+        if (playerCamera == null || monitor == null)
         {
-            originalCameraPosition = playerCamera.position;
-            originalCameraRotation = playerCamera.rotation;
-            hasOriginalCameraTransform = true;
-
-            if (firstPersonController != null)
-            {
-                firstPersonController.enabled = false;
-            }
-
-            StartCoroutine(ZoomRoutine());
+            Debug.LogError(
+                "请在 MonitorZoom 中指定 Player Camera 和 Monitor！"
+            );
+            return;
         }
-    }
 
+        originalCameraPosition = playerCamera.position;
+        originalCameraRotation = playerCamera.rotation;
+        hasOriginalCameraTransform = true;
+
+        if (firstPersonController != null)
+        {
+            firstPersonController.enabled = false;
+        }
+
+        StartCoroutine(ZoomRoutine());
+    }
 
     private IEnumerator ZoomRoutine()
     {
@@ -44,13 +52,36 @@ public class MonitorZoom : MonoBehaviour
         Vector3 startPosition = playerCamera.position;
         Quaternion startRotation = playerCamera.rotation;
 
-        Vector3 direction = monitor.position - playerCamera.position;
-        direction.Normalize();
+        // 使用监控屏幕反方向的水平轴向
+        Vector3 forward = -monitor.forward;
+        forward.y = 0f;
 
+        if (forward.sqrMagnitude < 0.001f)
+        {
+            forward = -transform.forward;
+            forward.y = 0f;
+        }
+
+        if (forward.sqrMagnitude < 0.001f)
+        {
+            Debug.LogError("无法确定水平推进方向！");
+            isZooming = false;
+            yield break;
+        }
+
+        forward.Normalize();
+
+        // 沿反转后的水平轴向推进
         Vector3 targetPosition =
-            monitor.position - direction * stopDistance;
+            monitor.position + forward * stopDistance;
 
-        Quaternion targetRotation = Quaternion.LookRotation(direction);
+        // 最终镜头朝向屏幕
+        Vector3 lookDirection = -forward;
+
+        Quaternion targetRotation = Quaternion.LookRotation(
+            lookDirection,
+            Vector3.up
+        );
 
         float elapsed = 0f;
 
@@ -61,11 +92,17 @@ public class MonitorZoom : MonoBehaviour
             float t = Mathf.Clamp01(elapsed / zoomDuration);
             t = t * t * (3f - 2f * t);
 
-            playerCamera.position =
-                Vector3.Lerp(startPosition, targetPosition, t);
+            playerCamera.position = Vector3.Lerp(
+                startPosition,
+                targetPosition,
+                t
+            );
 
-            playerCamera.rotation =
-                Quaternion.Slerp(startRotation, targetRotation, t);
+            playerCamera.rotation = Quaternion.Slerp(
+                startRotation,
+                targetRotation,
+                t
+            );
 
             yield return null;
         }
@@ -82,17 +119,16 @@ public class MonitorZoom : MonoBehaviour
         }
         else
         {
-            Debug.LogError("请在 MonitorZoom 中指定 Story UI Controller！");
+            Debug.LogError(
+                "请在 MonitorZoom 中指定 Story UI Controller！"
+            );
         }
     }
 
-    
-
-    
-    
     public void ReturnToRoom()
     {
-        if (storyUIController != null && storyUIController.storyUI != null)
+        if (storyUIController != null &&
+            storyUIController.storyUI != null)
         {
             storyUIController.storyUI.SetActive(false);
         }
@@ -115,5 +151,4 @@ public class MonitorZoom : MonoBehaviour
 
         Debug.Log("已返回监控室");
     }
-
 }
