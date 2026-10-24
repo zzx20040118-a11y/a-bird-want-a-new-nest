@@ -10,7 +10,9 @@ public class ClockAnimationEndHandler : MonoBehaviour
     public GameObject panel02Final;
     public GameObject panel03;
 
-    
+    [Header("Panel_03 相对 Panel_02_Final 的偏移")]
+    public Vector2 panel3Offset = new Vector2(224.30272f, -426.0013f);
+
     public void OnClockSolvedAnimationFinished()
     {
         RectTransform original =
@@ -21,9 +23,6 @@ public class ClockAnimationEndHandler : MonoBehaviour
 
         RectTransform newPanel =
             panel03.GetComponent<RectTransform>();
-
-        // 记录 Panel_02_Final 与 Panel_03 原本的相对偏移
-        Vector2 panel3Offset = new Vector2(224.30272f, -426.0013f);
 
         // 让最终静态面板继承 Panel_02 的当前位置和大小
         finalPanel.anchorMin = original.anchorMin;
@@ -45,5 +44,4 @@ public class ClockAnimationEndHandler : MonoBehaviour
         // 隐藏旧面板及动画
         panel02.SetActive(false);
     }
-
 }

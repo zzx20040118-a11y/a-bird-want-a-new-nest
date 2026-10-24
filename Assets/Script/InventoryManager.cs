@@ -23,30 +23,30 @@ public class InventoryManager : MonoBehaviour
         itemDatabase[item.itemID] = item;
     }
 
-  public bool AddItem(string itemID)
-{
-    if (string.IsNullOrEmpty(itemID))
+    public bool AddItem(string itemID)
     {
-        Debug.LogWarning("物品 ID 不能为空！");
-        return false;
+        if (string.IsNullOrEmpty(itemID))
+        {
+            Debug.LogWarning("物品 ID 不能为空！");
+            return false;
+        }
+
+        bool added = collectedItems.Add(itemID);
+
+        Debug.Log(
+            "[背包诊断] AddItem 被调用：" + itemID +
+            "，是否新增：" + added +
+            "，当前物品：" + string.Join(", ", collectedItems)
+        );
+
+        if (added)
+        {
+            Debug.Log("已收集物品：" + itemID);
+            RefreshInventoryUI();
+        }
+
+        return added;
     }
-
-    bool added = collectedItems.Add(itemID);
-
-    Debug.Log(
-        "[背包诊断] AddItem 被调用：" + itemID +
-        "，是否新增：" + added +
-        "，当前物品：" + string.Join(", ", collectedItems)
-    );
-
-    if (added)
-    {
-        Debug.Log("已收集物品：" + itemID);
-        RefreshInventoryUI();
-    }
-
-    return added;
-}
 
     public bool RemoveItem(string itemID)
     {
@@ -85,7 +85,10 @@ public class InventoryManager : MonoBehaviour
     private void RefreshInventoryUI()
     {
         InventoryUI[] inventoryUIs =
-            FindObjectsOfType<InventoryUI>(true);
+            FindObjectsByType<InventoryUI>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None
+            );
 
         foreach (InventoryUI ui in inventoryUIs)
         {
