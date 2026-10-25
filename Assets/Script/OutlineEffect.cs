@@ -18,29 +18,32 @@ public class OutlineEffect : MonoBehaviour
             return;
         }
 
+        MeshFilter originalMesh = GetComponent<MeshFilter>();
+
+        if (originalMesh == null)
+        {
+            Debug.LogWarning("没有找到 MeshFilter：" + gameObject.name);
+            return;
+        }
+
+        if (outlineMaterial == null)
+        {
+            Debug.LogWarning("没有指定 Outline Material：" + gameObject.name);
+            return;
+        }
+
         outlineObject = new GameObject("Outline_Visual");
         outlineObject.transform.SetParent(transform, false);
 
-        MeshFilter originalMesh = GetComponent<MeshFilter>();
+        MeshFilter outlineMesh = outlineObject.AddComponent<MeshFilter>();
+        outlineMesh.sharedMesh = originalMesh.sharedMesh;
 
-        if (originalMesh != null)
-        {
-            MeshFilter outlineMesh =
-                outlineObject.AddComponent<MeshFilter>();
+        MeshRenderer outlineRenderer = outlineObject.AddComponent<MeshRenderer>();
+        outlineRenderer.sharedMaterial = outlineMaterial;
 
-            outlineMesh.sharedMesh = originalMesh.sharedMesh;
+        outlineObject.SetActive(false);
 
-            MeshRenderer outlineRenderer =
-                outlineObject.AddComponent<MeshRenderer>();
-
-            outlineRenderer.sharedMaterial = outlineMaterial;
-            outlineObject.SetActive(false);
-        }
-        else
-        {
-            Debug.LogWarning("没有找到 MeshFilter：" + gameObject.name);
-            Destroy(outlineObject);
-        }
+        Debug.Log("轮廓对象创建成功：" + gameObject.name);
     }
 
     public void SetOutline(bool visible)
@@ -48,6 +51,15 @@ public class OutlineEffect : MonoBehaviour
         if (outlineObject != null)
         {
             outlineObject.SetActive(visible);
+            Debug.Log(
+                gameObject.name + " 的轮廓设置为：" + visible
+            );
+        }
+        else
+        {
+            Debug.LogWarning(
+                gameObject.name + " 的 outlineObject 不存在！"
+            );
         }
     }
 }

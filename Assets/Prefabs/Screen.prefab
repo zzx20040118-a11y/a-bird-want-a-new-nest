@@ -125,6 +125,7 @@ GameObject:
   - component: {fileID: 1519857393388144364}
   - component: {fileID: 7763754366439086108}
   - component: {fileID: 7436236396165032502}
+  - component: {fileID: 7314877966650187041}
   m_Layer: 0
   m_Name: Screen_Display
   m_TagString: Untagged
@@ -132,14 +133,13 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &7089923248994127435
-Transform:
+--- !u!224 &7089923248994127435
+RectTransform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6758138624713911477}
-  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: -0.72}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -147,6 +147,11 @@ Transform:
   m_Children: []
   m_Father: {fileID: 3129973110255691074}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!33 &1519857393388144364
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -226,3 +231,11 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!222 &7314877966650187041
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6758138624713911477}
+  m_CullTransparentMesh: 1

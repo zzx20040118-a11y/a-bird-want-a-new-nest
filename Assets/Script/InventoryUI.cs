@@ -1,3 +1,4 @@
+
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -6,6 +7,10 @@ public class InventoryUI : MonoBehaviour
     public GameObject inventoryPanel;
     public Transform itemList;
     public GameObject itemCardPrefab;
+
+    [Header("背包格子尺寸")]
+    public float cardWidth = 100f;
+    public float cardHeight = 100f;
 
     [Header("吹风机动画控制器")]
     public HairDryerAnimationController hairDryerController;
@@ -31,7 +36,7 @@ public class InventoryUI : MonoBehaviour
             return;
         }
 
-        // 清理旧的背包图标
+        // 清理旧的背包格子
         foreach (Transform child in itemList)
         {
             Destroy(child.gameObject);
@@ -45,6 +50,16 @@ public class InventoryUI : MonoBehaviour
                 continue;
 
             GameObject card = Instantiate(itemCardPrefab, itemList);
+
+            // 设置格子尺寸
+            RectTransform cardRect =
+                card.GetComponent<RectTransform>();
+
+            if (cardRect != null)
+            {
+                cardRect.sizeDelta =
+                    new Vector2(cardWidth, cardHeight);
+            }
 
             InventoryItemDrag drag =
                 card.GetComponent<InventoryItemDrag>();
@@ -60,7 +75,7 @@ public class InventoryUI : MonoBehaviour
                         hairDryerController;
                 }
 
-                // 设置 Panel_05 投放功能
+                // 保留 Panel_05 投放功能
                 if (item.itemID == panel05ItemID)
                 {
                     drag.canDropOnPanel05 = true;
@@ -69,7 +84,7 @@ public class InventoryUI : MonoBehaviour
                 }
             }
 
-            // 设置背包图标图片
+            // 设置背包图标图片，不修改图标尺寸
             Transform iconTransform =
                 card.transform.Find("ItemIcon");
 
@@ -81,6 +96,7 @@ public class InventoryUI : MonoBehaviour
             {
                 icon.sprite = item.itemIcon;
                 icon.enabled = item.itemIcon != null;
+                icon.preserveAspect = true;
             }
         }
     }

@@ -1,9 +1,13 @@
+
 using UnityEngine;
 
 public class ScreenInspectInteraction : MonoBehaviour
 {
     [Header("检查界面")]
     public GameObject inspectCanvas;
+
+    [Header("背包界面")]
+    public GameObject inventoryCanvas;
 
     [Header("图片缩放控制器")]
     public StoryCanvasZoomPan inspectImageZoomPan;
@@ -16,6 +20,9 @@ public class ScreenInspectInteraction : MonoBehaviour
 
     private bool playerNearby;
     private bool isInspecting;
+
+    // 记录打开检查界面前背包是否显示
+    private bool inventoryWasVisible;
 
     private void Start()
     {
@@ -48,6 +55,14 @@ public class ScreenInspectInteraction : MonoBehaviour
             return;
         }
 
+        // 记录背包原本的显示状态
+        inventoryWasVisible =
+            inventoryCanvas != null && inventoryCanvas.activeSelf;
+
+        // 打开检查界面时隐藏背包
+        if (inventoryCanvas != null)
+            inventoryCanvas.SetActive(false);
+
         // 每次打开都恢复图片最初的大小和位置
         if (inspectImageZoomPan != null)
             inspectImageZoomPan.ResetView();
@@ -70,6 +85,10 @@ public class ScreenInspectInteraction : MonoBehaviour
         if (inspectCanvas != null)
             inspectCanvas.SetActive(false);
 
+        // 恢复背包之前的显示状态
+        if (inventoryCanvas != null)
+            inventoryCanvas.SetActive(inventoryWasVisible);
+
         isInspecting = false;
 
         if (firstPersonController != null)
@@ -77,6 +96,9 @@ public class ScreenInspectInteraction : MonoBehaviour
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+
+        if (interactionPrompt != null && playerNearby)
+            interactionPrompt.SetActive(true);
     }
 
     private void OnTriggerEnter(Collider other)
