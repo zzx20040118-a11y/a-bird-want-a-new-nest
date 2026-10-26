@@ -1,9 +1,11 @@
+
 Shader "Custom/URPOutline"
 {
     Properties
     {
-        _OutlineColor ("Outline Color", Color) = (0, 1, 1, 1)
-        _OutlineWidth ("Outline Width", Range(0.001, 0.05)) = 0.01
+        _OutlineColor ("Outline Color", Color) = (1, 0, 1, 1)
+        _OutlineWidth ("Outline Width", Float) = 0.01
+        _OutlineAlpha ("Outline Transparency", Range(0, 1)) = 0.25
     }
 
     SubShader
@@ -11,26 +13,28 @@ Shader "Custom/URPOutline"
         Tags
         {
             "RenderPipeline" = "UniversalPipeline"
-            "RenderType" = "Opaque"
-            "Queue" = "Geometry"
+            "RenderType" = "Transparent"
+            "Queue" = "Transparent"
         }
 
         Pass
         {
-            Name "Outline"
             Cull Front
             ZWrite Off
-            ZTest LEqual
+            ZTest Always
+            Blend SrcAlpha OneMinusSrcAlpha
 
             HLSLPROGRAM
+
             #pragma vertex Vert
             #pragma fragment Frag
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
             CBUFFER_START(UnityPerMaterial)
-                half4 _OutlineColor;
+                float4 _OutlineColor;
                 float _OutlineWidth;
+                float _OutlineAlpha;
             CBUFFER_END
 
             struct Attributes
@@ -48,20 +52,29 @@ Shader "Custom/URPOutline"
             {
                 Varyings output;
 
-                float3 expandedPosition =
-                    input.positionOS.xyz +
-                    normalize(input.normalOS) * _OutlineWidth;
+                float3 positionWS =
+                    TransformObjectToWorld(input.positionOS.xyz);
+
+                float3 normalWS =
+                    TransformObjectToWorldNormal(input.normalOS);
+
+                positionWS +=
+                    normalize(normalWS) * (_OutlineWidth * 0.01);
 
                 output.positionHCS =
-                    TransformObjectToHClip(expandedPosition);
+                    TransformWorldToHClip(positionWS);
 
                 return output;
             }
 
             half4 Frag(Varyings input) : SV_Target
             {
-                return _OutlineColor;
+                return half4(
+                    _OutlineColor.rgb,
+                    _OutlineAlpha
+                );
             }
+
             ENDHLSL
         }
     }
