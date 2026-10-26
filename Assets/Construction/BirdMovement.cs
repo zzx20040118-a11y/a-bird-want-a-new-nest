@@ -1,29 +1,27 @@
 
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class BirdMovement : MonoBehaviour
 {
     public Camera gameCamera;
     public float moveSpeed = 3f;
 
-    [Header("Scene Transition")]
-    public float exitX = 8f;
-    public string nextSceneName = "ConstructionScene2";
-
     private Vector3 targetPosition;
-    private bool isMoving = false;
+    private bool isMoving;
     private float groundY;
 
     void Start()
     {
         groundY = transform.position.y;
         targetPosition = transform.position;
+
+        if (gameCamera == null)
+            gameCamera = Camera.main;
     }
 
     void Update()
     {
-        if (Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButtonDown(0) && gameCamera != null)
         {
             Vector3 mousePosition = Input.mousePosition;
             mousePosition.z = -gameCamera.transform.position.z;
@@ -39,13 +37,10 @@ public class BirdMovement : MonoBehaviour
 
             isMoving = true;
 
-            if (targetPosition.x != transform.position.x)
-            {
-                Vector3 scale = transform.localScale;
-                scale.x = Mathf.Abs(scale.x) *
-                    (targetPosition.x < transform.position.x ? -1 : 1);
-                transform.localScale = scale;
-            }
+            Vector3 scale = transform.localScale;
+            scale.x = Mathf.Abs(scale.x) *
+                (targetPosition.x < transform.position.x ? -1 : 1);
+            transform.localScale = scale;
         }
 
         if (isMoving)
@@ -56,19 +51,8 @@ public class BirdMovement : MonoBehaviour
                 moveSpeed * Time.deltaTime
             );
 
-            if (Mathf.Abs(transform.position.x - targetPosition.x)
-                < 0.01f)
-            {
+            if (Vector3.Distance(transform.position, targetPosition) < 0.01f)
                 isMoving = false;
-
-                if (transform.position.x >= exitX)
-                {
-                    SceneManager.LoadScene(
-                        nextSceneName,
-                        LoadSceneMode.Single
-                    );
-                }
-            }
         }
     }
 }
